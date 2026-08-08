@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique @db.VarChar(255)
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  // Not auto-generated: this is dummyjson's own product id, preserved as-is
+  // so /products/:id maps directly onto the source dataset.
+  id                   Int      @id
+  title                String   @db.VarChar(255)
+  description          String   @db.Text
+  categoryId           Int      @map("category_id")
+  category             Category @relation(fields: [categoryId], references: [id])
+  price                Decimal  @db.Decimal(10, 2)
+  discountPercentage   Decimal  @map("discount_percentage") @db.Decimal(5, 2)
+  rating               Decimal  @db.Decimal(3, 2)
+  stock                Int
+  brand                String?  @db.VarChar(255)
+  sku                  String   @unique @db.VarChar(100)
+  weight               Decimal  @db.Decimal(10, 2)
+  width                Decimal  @db.Decimal(10, 2)
+  height               Decimal  @db.Decimal(10, 2)
+  depth                Decimal  @db.Decimal(10, 2)
+  warrantyInformation  String?  @map("warranty_information") @db.VarChar(255)
+  shippingInformation  String?  @map("shipping_information") @db.VarChar(255)
+  availabilityStatus   String   @map("availability_status") @db.VarChar(50)
+  returnPolicy         String?  @map("return_policy") @db.VarChar(255)
+  minimumOrderQuantity Int      @default(1) @map("minimum_order_quantity")
+  thumbnail            String   @db.VarChar(2048)
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  images  ProductImage[]
+  tags    ProductTag[]
+  reviews ProductReview[]
+
+  @@index([categoryId])
+  @@map("products")
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  productId Int     @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String  @db.VarChar(2048)
+  position  Int
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model ProductTag {
+  productId Int     @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tag       String  @db.VarChar(100)
+
+  @@id([productId, tag])
+  @@map("product_tags")
+}
+
+model ProductReview {
+  id            Int      @id @default(autoincrement())
+  productId     Int      @map("product_id")
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  rating        Int
+  comment       String   @db.Text
+  reviewerName  String   @map("reviewer_name") @db.VarChar(255)
+  reviewerEmail String   @map("reviewer_email") @db.VarChar(255)
+  reviewedAt    DateTime @map("reviewed_at")
+
+  @@index([productId])
+  @@map("product_reviews")
+}
